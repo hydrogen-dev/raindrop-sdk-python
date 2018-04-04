@@ -1,0 +1,11 @@
+Metadata-Version: 1.0
+Name: raindrop
+Version: 0.1.0
+Summary: a python library for Hydro Client Raindrop
+Home-page: https://github.com/hydrogen-dev
+Author: Andy Chorlian
+Author-email: andy@hydrogenplatform.com
+License: MIT
+Description: UNKNOWN
+Keywords: blockchain,ethereum,2FA,raindrop,web3,two-factor
+Platform: UNKNOWN
