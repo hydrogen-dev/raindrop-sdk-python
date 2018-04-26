@@ -47,6 +47,19 @@ def addClientToApp(username, password, user, application_id):
     resp_json = json.loads(content.decode("utf-8"))
     return(resp_json)
 
+def removeClientFromApp(username, password, user, application_id):
+    if environment == "none":
+        return "Please set the environment variable"
+
+    h = httplib2.Http(".cache")
+    h.add_credentials(username, password)
+    resp, content = h.request(environment + "/application/client?username="+user+"&application_id="+application_id,
+        "DELETE",
+        headers={'content-type':'application/json'} )
+
+    resp_json = json.loads(content.decode("utf-8"))
+    return(resp_json)
+
 def generateMessage():
     code = str(secrets.randbelow(int(1e6))).zfill(6)
     return(code)
@@ -86,6 +99,19 @@ def authenticate(username, password, hydroAddressId):
     h.add_credentials(username, password)
     resp, content = h.request(environment + "/authenticate?hydro_address_id="+hydroAddressId,
         "GET",
+        headers={'content-type':'application/json'} )
+
+    resp_json = json.loads(content.decode("utf-8"))
+    return(resp_json)
+
+def verify_transaction(username, password, transactionHash):
+    if environment == "none":
+        return "Please set the environment variable"
+
+    h = httplib2.Http(".cache")
+    h.add_credentials(username, password)
+    resp, content = h.request(environment + "/transaction?transaction_hash="+transactionHash,
+        "POST",
         headers={'content-type':'application/json'} )
 
     resp_json = json.loads(content.decode("utf-8"))
