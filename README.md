@@ -1,82 +1,79 @@
 # Hydro Raindrop
-This package provides a suite of convenience functions intended to simplify the integration of Hydro's [Raindrop authentication](https://www.hydrogenplatform.com/hydro) into your project. An equivalent [Javascript SDK](https://github.com/hydrogen-dev/raindrop-sdk-js) is also available. Raindrop is available in two flavors:
+This package provides a suite of convenience functions intended to simplify the integration of Hydro's [Raindrop authentication](https://www.hydrogenplatform.com/hydro) into your project. An equivalent [Python SDK](https://github.com/hydrogen-dev/raindrop-sdk-python) is also available. More information, including detailed API documentation, is available in the [Raindrop documentation](https://www.hydrogenplatform.com/docs/hydro/v1/#Raindrop). Raindrop comes in two flavors:
 
-## Raindrop Enterprise
-Raindrop Enterprise is an enterprise-level security protocol to secure APIs. The open-source code powering Raindrop enterprise is available [here](https://github.com/hydrogen-dev/smart-contracts/tree/master/hydro-token-and-raindrop-enterprise). For more information, please refer to the [Raindrop Enterprise documentation](https://www.hydrogenplatform.com/docs/hydro/v1/#Raindrop).
+## Client-side Raindrop
+Client-side Raindrop is a next-gen 2FA solution. We've open-sourced the [code powering Client-side Raindrop](https://github.com/hydrogen-dev/smart-contracts/tree/master/raindrop-client).
 
-## Raindrop Client
-Raindrop Client is an innovative next-gen 2FA solution. The open-source code powering Raindrop enterprise is available [here](https://github.com/hydrogen-dev/smart-contracts/tree/master/raindrop-client).
+
+## Server-side Raindrop
+Server-side Raindrop is an enterprise-level security protocol to secure APIs and other shared resources. We've open-sourced the [code powering Server-side Raindrop](https://github.com/hydrogen-dev/smart-contracts/tree/master/hydro-token-and-raindrop-enterprise).
+
 
 ## Installation
 ### Recommended
-Install [raindrop on pypi](https://pypi.org/project/raindrop/):
+Install [raindrop on pypi](https://pypi.org/project/raindrop/). Supports Python >=3.6.
 ```
 pip install raindrop
 ```
 
 ## Getting started
-The `raindrop` package has two main function sets: `enterprise` and `client`. Before being able to use `raindrop`, you must set your desired environment: `raindrop.setEnvironment('Sandbox'|'Production')` (see the [docs](https://www.hydrogenplatform.com/docs/hydro/v1/#Testnet) for more information).
+The `raindrop` package defines two classes that you will interact with: `ServerRaindropPartner` and `ClientRaindropPartner`. To start making API calls, you'll need to instantiate a each object. The SDK will automatically fetch you an [OAuth token](https://www.hydrogenplatform.com/docs/hydro/v1/#Authentication), and set [your environment](https://www.hydrogenplatform.com/docs/hydro/v1/#Environment).
 
-## `enterprise` Functions
-### `setEnvironment`
-You must set the environment before any functions that hit the Hydrogen API can be called. See the [docs](https://www.hydrogenplatform.com/docs/hydro/v1/#Testnet) for more information about what this means.
-- `newEnvironment`: `'Sandbox'` or `'Production'`
-### `whitelist(hydroUserName, hydroKey, addressToWhitelist)`
-A one-time call that whitelists a user to authenticate with Enterprise raindrop.
-- `hydroUserName`: Your username for the Hydro API
-- `hydroKey`: Your key for the Hydro API
-- `addressToWhitelist`: The Ethereum address of the user you're whitelisting
+## `ClientRaindropPartner` Functions
+```python
+ClientRaindropPartner('Sandbox', 'your_id', 'your_secret', 'your_application_id')
+```
+- `environment` (required): `Sandbox` | `Production` to set your environment
+- `client_id` (required): Your OAuth id for the Hydro API
+- `client_secret` (required): Your OAuth secret for the Hydro API
+- `application_id` (required): Your application id for the Hydro API
 
-Returns:
-- `hydro_address_id`: this value **must** be stored and passed in all future calls involving this user
-### `challenge(hydroUserName, hydroKey, hydroAddressId)`
-Calling this functions initiates an authentication attempt on behalf of the user associated with `hydroAddressId`.
-- `hydroUserName`: Your username for the Hydro API
-- `hydroKey`: Your key for the Hydro API
-- `hydroAddressId`: hydro_address_id from the previous `whitelist` call.
+### `register_user(username)`
+Should be called when a user elects to use Raindrop Client for the first time with your application.
+- `username`: the new user's Hydro username (the one they used when signing up for Hydro mobile app)
 
-Returns:
-- `amount`: Quantity of Hydro tokens the user associated with hydroAddressId must send to the blockchain
-- `challenge`: Randomly generated string used to confirm the validity of the transaction
-- `partner_id`: The caller's partner ID, the same for all authentication requests
-### `authenticate(hydroUserName, hydroKey, hydroAddressId)`
-Checks whether the user correctly performed the raindrop
-- `hydroUserName`: Your username for the Hydro API
-- `hydroKey`: Your key for the Hydro API
-- `hydroAddressId`: hydro_address_id from the previous `whitelist` call
+### `verify_signature(username, message)`
+Should be called each time you need to verify whether a user has signed a message.
+- `username`: the username of the user that is meant to have signed `message`
+- `message`: a message generated from `generate_message()` (or any 6-digit numeric code)
 
-Returns:
-- `verified`: A boolean indicating whether or not the user should be able to proceed
+### `unregister_user(username)`
+Should be called when a user disables Client-side Raindrop with your application.
+- `username`: the user's Hydro username (the one they used when signing up for Hydro mobile app)
 
-## `client` Functions
-### `generateMessage`
-Generates a random 6-digit string of integers for users to sign. Uses system-level CSPRNG.
+### `generate_message()`
+Generates a random 6-digit integers for users to sign. Uses system-level CSPRNG.
 
-Returns:
-- A string of 6 random integers
-### `addClientToApp(hydroUserName, hydroKey, newUserName, hydroApplicationId)`
-This function should be called once when a user is signing up for Raindrop Client `hydroAddressId`.
-- `hydroUserName`: Your username for the hydro API
-- `hydroKey`: Your key for the hydro API
-- `hydroApplicationId`: Your application ID for the Hydro API
-- `newUserName`: the username of the new user that they used when signing up for the Hydrogen 2FA app
 
-Returns:
-- `createDate`: time when the user registered with this application
-- `username`: the username
-- `application_client_mapping_id`: a uuid identifying the user's link with this application
-- `application_id`: the same as `hydroApplicationId`.
+## `ServerRaindropPartner` Functions
+```python
+ServerRaindropPartner('Sandbox', 'your_id', 'your_secret')
+```
+- `environment` (required): `Sandbox` | `Production` to set your environment
+- `client_id` (required): Your OAuth id for the Hydro API
+- `client_secret` (required): Your OAuth secret for the Hydro API
 
-### `verify(hydroUserName, hydroKey, challengeUserName, challengeString, hydroApplicationId)`
-This function should be called whenever you need to verify whether a user has signed a message.
-- `hydroUserName`: Your username for the hydro API
-- `hydroKey`: Your key for the hydro API
-- `hydroApplicationId`: Your application ID for the Hydro API
-- `challengeUserName`: the username of the new user that claims to have signed `challengeString`
-- `challengeString`: a message generated from `generateMessage()`
+### `whitelist(address)`
+A one-time call that whitelists a user to authenticate with your API via Server-side Raindrop.
+- `address`: The Ethereum address of the user you're whitelisting
 
-Returns:
-- `verified`: boolean indicating whether the user has signed `challengeString`
+### `request_challenge(hydro_address_id)`
+Initiate an authentication attempt on behalf of the user associated with `hydro_address_id`.
+- `hydro_address_id`: the `hydro_address_id` of the authenticating user
+
+### `authenticate(hydro_address_id)`
+Checks whether the user correctly performed the raindrop.
+- `hydro_address_id`: the `hydro_address_id` of the user who claims to be authenticated
+
+
+## Generic Functions
+### `refresh_token()`
+Manually refreshes OAuth token.
+
+### `transactionStatus(transaction_hash)`
+This function returns true when the transaction referenced by `transaction_hash` has been included in a block on the Ethereum blockchain (Rinkeby if the environment is `Sandbox`, Mainnet if the environment is `Production`).
+- `transaction_hash` (required): Hash of a transaction
+
 
 ## Copyright & License
 Copyright 2018 The Hydrogen Technology Corporation under the GNU General Public License v3.0.
