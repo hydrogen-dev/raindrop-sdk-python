@@ -1,138 +1,118 @@
-import httplib2, json, secrets
+import secrets
+import requests
 
-sandbox = "https://sandbox.hydrogenplatform.com"
-production = "https://api.hydrogenplatform.com"
+from requests.auth import HTTPBasicAuth
 
-environment = "none"
-token = "none"
 
-# Define a function
-def health():
-    print("Hello, World!")
+class BasicPartner(object):
+    acceptable_environments = {
+        'Dev': 'https://dev.hydrogenplatform.com',
+        'QA': 'https://qa.hydrogenplatform.com',
+        'Sandbox': 'https://sandbox.hydrogenplatform.com',
+        'Production': 'https://api.hydrogenplatform.com'
+    }
 
-def setEnvironment(setter):
-    global environment
-    if setter == "sandbox":
-        environment = sandbox
-        return environment
-    elif setter == "production":
-        environment = production
-        return environment
-    else:
-        return "Please call this function with either 'sandbox' or 'production'"
+    def __init__(self, environment, client_id, client_secret):
+        self.environment = None
+        self.url = None
+        self.token = None
+        self.client_id = client_id
+        self.client_secret = client_secret
 
-def Raindrop(username, password, env):
-    setEnvironment(env)
+        self.set_environment(environment)
+        self.refresh_token()
 
-    h = httplib2.Http(".cache")
-    h.add_credentials(username, password)
-    resp, content = h.request(environment + "/authorization/v1/oauth/token?grant_type=client_credentials",
-        "POST",
-        headers={'content-type':'application/json'} )
+    def set_environment(self, environment):
+        assert environment in self.acceptable_environments.keys(),\
+            f"Environment must be one of: {' | '.join(self.acceptable_environments.keys())}."
+        self.environment = environment
+        self.api_url = self.acceptable_environments[self.environment]
 
-    resp_json = json.loads(content.decode("utf-8"))
-    global token
-    token = resp_json["access_token"]
-    return resp_json
+    def refresh_token(self):
+        url = f'{self.api_url}/authorization/v1/oauth/token'
+        r = requests.post(
+            url, params={'grant_type': 'client_credentials'}, auth=HTTPBasicAuth(self.client_id, self.client_secret)
+        )
+        r.raise_for_status()
+        self.OAuth_token = r.json()['access_token']
 
-def verify(user, message, application_id):
-    global environment
-    if environment == "none":
-        return "Please set the environment variable"
+    def call_hydro_API(self, verb, endpoint, query_string_parameters=None, return_json=False, raise_for_status=True):
+        headers = {
+            'Content-Type': 'application/json',
+            'Authorization': f'Bearer {self.OAuth_token}'
+        }
+        url = f'{self.api_url}/hydro/v1{endpoint}'
+        r = requests.request(verb, url=url, params=query_string_parameters, headers=headers)
 
-    h = httplib2.Http(".cache")
-    resp, content = h.request(environment + "/hydro/v1/verify_signature?username="+user+"&msg="+message+"&application_id="+application_id,
-        "GET",
-        headers={'content-type':'application/json',
-                 'Authorization': 'Bearer ' + token} )
+        if raise_for_status:
+            r.raise_for_status()
+        if return_json:
+            assert raise_for_status, "Cannot return a JSON without checking for status"
+            return r.json()
+        else:
+            return r
 
-    resp_json = json.loads(content.decode("utf-8"))
-    return(resp_json)
+    def verify_transaction(self, transaction_hash):
+        return self.call_hydro_API('GET', '/transaction', {'transaction_hash': transaction_hash})
 
-def addClientToApp(user, application_id):
-    global environment
-    if environment == "none":
-        return "Please set the environment variable"
 
-    h = httplib2.Http(".cache")
-    resp, content = h.request(environment + "/hydro/v1/application/client?username="+user+"&application_id="+application_id,
-        "POST",
-        headers={'content-type':'application/json',
-                 'Authorization': 'Bearer ' + token} )
+class ServerRaindropPartner(BasicPartner):
+    def whitelist(self, address, return_json=True, raise_for_status=True):
+        return self.call_hydro_API(
+            'POST', f'/whitelist/{address}', return_json=return_json, raise_for_status=raise_for_status
+        )
 
-    resp_json = json.loads(content.decode("utf-8"))
-    return(resp_json)
+    def request_challenge(self, hydro_address_id, return_json=True, raise_for_status=True):
+        return self.call_hydro_API(
+            'POST',
+            '/challenge',
+            {'hydro_address_id': hydro_address_id},
+            return_json=return_json,
+            raise_for_status=raise_for_status
+        )
 
-def removeClientFromApp(user, application_id):
-    global environment
-    if environment == "none":
-        return "Please set the environment variable"
+    def authenticate(self, hydro_address_id, return_json=True, raise_for_status=True):
+        return self.call_hydro_API(
+            'GET',
+            '/authenticate',
+            {'hydro_address_id': hydro_address_id},
+            return_json=return_json,
+            raise_for_status=raise_for_status
+        )
 
-    h = httplib2.Http(".cache")
-    resp, content = h.request(environment + "/hydro/v1/application/client?username="+user+"&application_id="+application_id,
-        "DELETE",
-        headers={'content-type':'application/json',
-                 'Authorization': 'Bearer ' + token} )
 
-    resp_json = json.loads(content.decode("utf-8"))
-    return(resp_json)
+class ClientRaindropPartner(BasicPartner):
+    def __init__(self, environment, client_id, client_secret, application_id):
+        self.application_id = application_id
+        super(ClientRaindropPartner, self).__init__(environment, client_id, client_secret)
 
-def generateMessage():
-    code = str(secrets.randbelow(int(1e6))).zfill(6)
-    return(code)
+    def verify_signature(self, username, message, return_json=True, raise_for_status=True):
+        return self.call_hydro_API(
+            'GET',
+            '/verify_signature',
+            {'username': username, 'msg': message, 'application_id': self.application_id},
+            return_json=return_json,
+            raise_for_status=raise_for_status
+        )
 
-def whitelist(address):
-    global environment
-    if environment == "none":
-        return "Please set the environment variable"
+    def register_user(self, username):
+        return self.call_hydro_API(
+            'POST',
+            '/application/client',
+            {'username': username, 'application_id': self.application_id},
+            return_json=False,
+            raise_for_status=True
+        )
 
-    h = httplib2.Http(".cache")
-    resp, content = h.request(environment + "/hydro/v1/whitelist/"+address,
-        "POST",
-        headers={'content-type':'application/json',
-                 'Authorization': 'Bearer ' + token} )
+    def unregister_user(self, username):
+        return self.call_hydro_API(
+            'DELETE',
+            '/application/client',
+            {'username': username, 'application_id': self.application_id},
+            return_json=False,
+            raise_for_status=True
+        )
 
-    resp_json = json.loads(content.decode("utf-8"))
-    return(resp_json)
-
-def challenge(hydroAddressId):
-    global environment
-    if environment == "none":
-        return "Please set the environment variable"
-
-    h = httplib2.Http(".cache")
-    resp, content = h.request(environment + "/hydro/v1/challenge?hydro_address_id="+hydroAddressId,
-        "POST",
-        headers={'content-type':'application/json',
-                 'Authorization': 'Bearer ' + token} )
-
-    resp_json = json.loads(content.decode("utf-8"))
-    return(resp_json)
-
-def authenticate(hydroAddressId):
-    global environment
-    if environment == "none":
-        return "Please set the environment variable"
-
-    h = httplib2.Http(".cache")
-    resp, content = h.request(environment + "/hydro/v1/authenticate?hydro_address_id="+hydroAddressId,
-        "GET",
-        headers={'content-type':'application/json',
-                 'Authorization': 'Bearer ' + token} )
-
-    resp_json = json.loads(content.decode("utf-8"))
-    return(resp_json)
-
-def verify_transaction(transactionHash):
-    global environment
-    if environment == "none":
-        return "Please set the environment variable"
-
-    h = httplib2.Http(".cache")
-    resp, content = h.request(environment + "/hydro/v1/transaction?transaction_hash="+transactionHash,
-        "GET",
-        headers={'content-type':'application/json',
-                 'Authorization': 'Bearer ' + token} )
-
-    resp_json = json.loads(content.decode("utf-8"))
-    return(resp_json)
+    @staticmethod
+    def generate_message():
+        return str(secrets.randbelow(int(1e6))).zfill(6)
