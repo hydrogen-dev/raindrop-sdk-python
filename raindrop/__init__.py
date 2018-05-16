@@ -1,1 +1,1 @@
-from raindrop import ServerRaindropPartner, ClientRaindropPartner
+from .raindrop import ServerRaindropPartner, ClientRaindropPartner
