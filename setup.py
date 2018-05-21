@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name='raindrop',
-    version='0.2.5',
+    version='0.2.6',
     description='A python library for Hydro Raindrop',
     license='MIT',
     packages=['raindrop'],

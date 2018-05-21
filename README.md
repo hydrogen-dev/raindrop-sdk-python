@@ -74,6 +74,9 @@ Manually refreshes OAuth token.
 This function returns true when the transaction referenced by `transaction_hash` has been included in a block on the Ethereum blockchain (Rinkeby if the environment is `Sandbox`, Mainnet if the environment is `Production`).
 - `transaction_hash` (required): Hash of a transaction
 
+## `Note:`
+Many of the above functions have optional parameters `raise_for_status` and `return_json`. These parameters turn status code error handling and json return values on/off. They are set to sensible defaut parameters.
+
 
 ## Copyright & License
 Copyright 2018 The Hydrogen Technology Corporation under the GNU General Public License v3.0.
