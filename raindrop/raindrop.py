@@ -37,7 +37,7 @@ class BasicPartner(object):
             'Authorization': f'Bearer {self.OAuth_token}'
         }
         url = f'{self.api_url}/hydro/v1{endpoint}'
-        r = requests.request(verb, url=url, params=query_string, data=body, headers=headers)
+        r = requests.request(verb, url=url, params=query_string, json=body, headers=headers)
 
         if raise_for_status:
             r.raise_for_status()
@@ -56,7 +56,7 @@ class ServerRaindropPartner(BasicPartner):
         return self.call_hydro_API(
             'POST',
             '/whitelist',
-            body={'address': 'address'},
+            body={'address': address},
             raise_for_status=raise_for_status,
             return_json=return_json
         )
