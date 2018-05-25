@@ -28,18 +28,18 @@ ClientRaindropPartner('Sandbox', 'your_id', 'your_secret', 'your_application_id'
 - `client_secret` (required): Your OAuth secret for the Hydro API
 - `application_id` (required): Your application id for the Hydro API
 
-### `register_user(username)`
+### `register_user(hydro_id)`
 Should be called when a user elects to use Raindrop Client for the first time with your application.
-- `username`: the new user's Hydro username (the one they used when signing up for Hydro mobile app)
+- `hydro_id`: the new user's HydroID (the one they used when signing up for Hydro mobile app)
 
-### `verify_signature(username, message)`
+### `verify_signature(hydro_id, message)`
 Should be called each time you need to verify whether a user has signed a message.
-- `username`: the username of the user that is meant to have signed `message`
+- `hydro_id`: the HydroID of the user that is meant to have signed `message`
 - `message`: a message generated from `generate_message()` (or any 6-digit numeric code)
 
-### `unregister_user(username)`
+### `unregister_user(hydro_id)`
 Should be called when a user disables Client-side Raindrop with your application.
-- `username`: the user's Hydro username (the one they used when signing up for Hydro mobile app)
+- `hydro_id`: the user's Hydro HydroID (the one they used when signing up for Hydro mobile app)
 
 ### `generate_message()`
 Generates a random 6-digit integers for users to sign. Uses system-level CSPRNG.

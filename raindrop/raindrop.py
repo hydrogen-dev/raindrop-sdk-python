@@ -85,29 +85,29 @@ class ClientRaindropPartner(BasicPartner):
         self.application_id = application_id
         super(ClientRaindropPartner, self).__init__(environment, client_id, client_secret)
 
-    def register_user(self, username, raise_for_status=True):
+    def register_user(self, hydro_id, raise_for_status=True):
         return self.call_hydro_API(
             'POST',
             '/application/client',
-            body={'username': username, 'application_id': self.application_id},
+            body={'hydro_id': hydro_id, 'application_id': self.application_id},
             raise_for_status=raise_for_status,
             return_json=False
         )
 
-    def unregister_user(self, username, raise_for_status=True):
+    def unregister_user(self, hydro_id, raise_for_status=True):
         return self.call_hydro_API(
             'DELETE',
             '/application/client',
-            query_string={'username': username, 'application_id': self.application_id},
+            query_string={'hydro_id': hydro_id, 'application_id': self.application_id},
             raise_for_status=raise_for_status,
             return_json=False
         )
 
-    def verify_signature(self, username, message, raise_for_status=True, return_json=True):
+    def verify_signature(self, hydro_id, message, raise_for_status=True, return_json=True):
         return self.call_hydro_API(
             'GET',
             '/verify_signature',
-            query_string={'username': username, 'msg': message, 'application_id': self.application_id},
+            query_string={'hydro_id': hydro_id, 'message': message, 'application_id': self.application_id},
             raise_for_status=raise_for_status,
             return_json=return_json
         )
