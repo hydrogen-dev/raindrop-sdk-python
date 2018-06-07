@@ -17,7 +17,7 @@ pip install raindrop
 ```
 
 ## Getting started
-The `raindrop` package defines two classes that you will interact with: `ServerRaindropPartner` and `ClientRaindropPartner`. To start making API calls, you'll need to instantiate a each object. The SDK will automatically fetch you an [OAuth token](https://www.hydrogenplatform.com/docs/hydro/v1/#Authentication), and set [your environment](https://www.hydrogenplatform.com/docs/hydro/v1/#Environment).
+The `raindrop` package defines two classes that you will interact with: `ServerRaindropPartner` and `ClientRaindropPartner`. To start making API calls, you'll need to instantiate each object. The SDK will automatically fetch you an [OAuth token](https://www.hydrogenplatform.com/docs/hydro/v1/#Authentication), and set [your environment](https://www.hydrogenplatform.com/docs/hydro/v1/#Environment).
 
 ## `ClientRaindropPartner` Functions
 ```python
