@@ -70,14 +70,22 @@ class ServerRaindropPartner(BasicPartner):
             return_json=return_json
         )
 
-    def authenticate(self, hydro_address_id, raise_for_status=True, return_json=True):
-        return self.call_hydro_API(
+    def authenticate(self, hydro_address_id, throw_authentication_error=False):
+        call = self.call_hydro_API(
             'GET',
             '/authenticate',
             query_string={'hydro_address_id': hydro_address_id},
-            raise_for_status=raise_for_status,
-            return_json=return_json
+            raise_for_status=False
         )
+        if call.status_code == requests.codes.unauthorized:
+            if throw_authentication_error:
+                raise ValueError('User did not correctly authenticate.')
+            else:
+                return (False,)
+        elif call.status_code == requests.codes.ok:
+            return (True, call.json())
+        else:
+            call.raise_for_status()
 
 
 class ClientRaindropPartner(BasicPartner):
@@ -103,14 +111,22 @@ class ClientRaindropPartner(BasicPartner):
             return_json=False
         )
 
-    def verify_signature(self, hydro_id, message, raise_for_status=True, return_json=True):
-        return self.call_hydro_API(
+    def verify_signature(self, hydro_id, message, throw_authentication_error=False):
+        call = self.call_hydro_API(
             'GET',
             '/verify_signature',
             query_string={'hydro_id': hydro_id, 'message': message, 'application_id': self.application_id},
-            raise_for_status=raise_for_status,
-            return_json=return_json
+            raise_for_status=False
         )
+        if call.status_code == requests.codes.unauthorized:
+            if throw_authentication_error:
+                raise ValueError('User did not correctly authenticate.')
+            else:
+                return (False,)
+        elif call.status_code == requests.codes.ok:
+            return (True, call.json())
+        else:
+            call.raise_for_status()
 
     @staticmethod
     def generate_message():

@@ -37,6 +37,8 @@ Should be called each time you need to verify whether a user has signed a messag
 - `hydro_id`: the HydroID of the user that is meant to have signed `message`
 - `message`: a message generated from `generate_message()` (or any 6-digit numeric code)
 
+Returns a tuple that looks like: `(true|false, {...})`. The first tuple element will only be `true` for successful verification attempts.
+
 ### `unregister_user(hydro_id)`
 Should be called when a user disables Client-side Raindrop with your application.
 - `hydro_id`: the user's Hydro HydroID (the one they used when signing up for Hydro mobile app)
@@ -64,6 +66,8 @@ Initiate an authentication attempt on behalf of the user associated with `hydro_
 ### `authenticate(hydro_address_id)`
 Checks whether the user correctly performed the raindrop.
 - `hydro_address_id`: the `hydro_address_id` of the user who claims to be authenticated
+
+Returns a tuple that looks like: `(true|false, {...})`. The first tuple element will only be `true` for successful authentication attempts.
 
 
 ## Generic Functions
